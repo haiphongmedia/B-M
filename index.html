@@ -321,34 +321,24 @@
     o.start(t); o.stop(t + dur + .02);
   }
   const r = (a, b) => a + Math.random() * (b - a);
-  const sounds = [
-    // pop
-    p => tone({ f0: 700 * p, f1: 250 * p, dur: .09, vol: .35 }),
-    // bubble
-    p => tone({ f0: 280 * p, f1: 950 * p, dur: .11, vol: .3 }),
-    // chirp chirp
-    p => { tone({ type: 'triangle', f0: 1800 * p, f1: 2400 * p, dur: .05, vol: .2 });
-           tone({ type: 'triangle', f0: 2000 * p, f1: 2700 * p, dur: .05, vol: .2, delay: .07 }); },
-    // boing
-    p => tone({ f0: 420 * p, f1: 160 * p, dur: .25, vol: .3, vib: 28 }),
-    // ding
-    p => { tone({ f0: 1320 * p, dur: .35, vol: .18 }); tone({ f0: 2640 * p, dur: .2, vol: .06 }); },
-    // coin
-    p => { tone({ type: 'square', f0: 988 * p, dur: .06, vol: .08 });
-           tone({ type: 'square', f0: 1319 * p, dur: .18, vol: .08, delay: .06 }); },
-    // squeak
-    p => tone({ type: 'triangle', f0: 1400 * p, f1: 2300 * p, dur: .08, vol: .22 }),
-    // blip
-    p => tone({ type: 'sine', f0: 880 * p, f1: 660 * p, dur: .07, vol: .3 }),
-    // kitty mew
-    p => tone({ type: 'triangle', f0: 900 * p, f1: 600 * p, dur: .2, vol: .2, vib: 9 }),
-  ];
-  let lastSound = -1;
+  // Vòng lặp 10 tiếng: lần bấm 1→9 là 9 tiếng bloop cao dần (mỗi bậc cao hơn ~1 nửa cung),
+  // lần thứ 10 là tiếng riêng, rồi quay lại tiếng 1.
+  const BASE = 520, STEP = Math.pow(2, 1 / 12);
+  const bloop = n => {               // n = 1..9
+    const p = Math.pow(STEP, (n - 1) * 1.25);
+    tone({ f0: BASE * p, f1: BASE * 1.8 * p, dur: .07, vol: .32 });
+  };
+  const tenth = () => {              // tiếng thứ 10: bloop đôi + "ting"
+    const p = Math.pow(STEP, 9 * 1.25);
+    tone({ f0: BASE * p, f1: BASE * 1.8 * p, dur: .06, vol: .3 });
+    tone({ f0: BASE * 1.25 * p, f1: BASE * 2.2 * p, dur: .06, vol: .3, delay: .07 });
+    tone({ f0: BASE * 2.5 * p, dur: .35, vol: .16, delay: .14 });
+    tone({ f0: BASE * 5 * p, dur: .2, vol: .05, delay: .14 });
+  };
   function playTap() {
     if (!state.sound) return;
-    let i; do { i = Math.floor(Math.random() * sounds.length); } while (i === lastSound);
-    lastSound = i;
-    sounds[i](r(.92, 1.1));
+    const pos = state.taps % 10;     // 1..9, 0 = lần thứ 10
+    pos === 0 ? tenth() : bloop(pos);
   }
   function playMilestone(big) {
     if (!state.sound) return;
@@ -446,8 +436,8 @@
     const y = e && e.clientY ? e.clientY : rect.top + rect.height * .3;
     floatText(x, y - 20);
 
-    if (state.taps % 100 === 0) { playMilestone(true); confetti(80); showToast(fmt(state.taps) + ' lần bấm! 🏆'); buzz([30, 40, 30]); }
-    else if (state.taps % 10 === 0) { setTimeout(() => playMilestone(false), 60); confetti(26); showToast(cheers[Math.floor(Math.random() * cheers.length)]); }
+    if (state.taps % 100 === 0) { setTimeout(() => playMilestone(true), 250); confetti(80); showToast(fmt(state.taps) + ' lần bấm! 🏆'); buzz([30, 40, 30]); }
+    else if (state.taps % 10 === 0) { confetti(26); showToast(cheers[Math.floor(Math.random() * cheers.length)]); }
   }
 
   // press feel: react on pointerdown for speed
@@ -523,7 +513,7 @@
   sheetBg.addEventListener('click', e => { if (e.target === sheetBg) closeSheet(false); });
 
   // toggles
-  $('soundBtn').addEventListener('click', () => { state.sound = !state.sound; save(); render(); if (state.sound) sounds[0](1); });
+  $('soundBtn').addEventListener('click', () => { state.sound = !state.sound; save(); render(); if (state.sound) bloop(1); });
   $('vibBtn').addEventListener('click', () => { state.vib = !state.vib; save(); render(); buzz(40); showToast(state.vib ? 'Bật rung 📳' : 'Tắt rung'); });
 
   // prevent pinch / double-tap zoom on iOS

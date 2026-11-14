@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fff4ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Đếm Đếm">
+<title>Đếm Đếm 🐣</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff4ec;
+    --bg2:#ffe9f0;
+    --card:#ffffff;
+    --ink:#4a3b52;
+    --muted:#a895ad;
+    --pink:#ff8fab;
+    --pink-d:#f06a8c;
+    --peach:#ffc09f;
+    --mint:#9ee6cf;
+    --lav:#c8b6ff;
+    --yellow:#ffe27a;
+    --shadow:0 10px 30px rgba(240,106,140,.18);
+    --radius:28px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Baloo 2", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 8%, #ffe3ec 0 18%, transparent 19%),
+      radial-gradient(circle at 92% 22%, #e5f8f1 0 14%, transparent 15%),
+      radial-gradient(circle at 80% 95%, #efe8ff 0 20%, transparent 21%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    background-attachment:fixed;
+    touch-action:manipulation;
+    user-select:none;-webkit-user-select:none;
+    overflow:hidden;
+  }
+  .app{
+    height:100dvh;
+    max-width:480px;margin:0 auto;
+    display:flex;flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 16px);
+    gap:14px;
+  }
+
+  /* ---------- top bar ---------- */
+  .top{display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-weight:800;font-size:24px;letter-spacing:.3px;display:flex;align-items:center;gap:6px;}
+  .brand .chick{display:inline-block;animation:wobble 3s ease-in-out infinite;transform-origin:50% 90%;}
+  @keyframes wobble{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+  .icons{display:flex;gap:8px;}
+  .icon-btn{
+    width:42px;height:42px;border-radius:14px;border:0;
+    background:var(--card);box-shadow:0 4px 12px rgba(0,0,0,.06);
+    font-size:20px;display:grid;place-items:center;cursor:pointer;
+    transition:transform .15s;
+  }
+  .icon-btn:active{transform:scale(.9);}
+  .icon-btn.off{opacity:.45;filter:grayscale(1);}
+
+  /* ---------- display ---------- */
+  .display{
+    background:var(--card);border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px 20px 14px;text-align:center;position:relative;overflow:hidden;
+  }
+  .display::before{
+    content:"";position:absolute;inset:auto -30px -40px auto;width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle,#fff0f4,transparent 70%);
+  }
+  .label{font-size:14px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+  .count{
+    font-size:clamp(72px, 24vw, 112px);line-height:1;font-weight:800;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(135deg,var(--pink-d),#b48cff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    margin:6px 0 2px;display:inline-block;
+  }
+  .count.bump{animation:bump .28s cubic-bezier(.3,1.8,.5,1);}
+  .count.down{animation:down .3s ease;}
+  @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.14) rotate(-2deg)}100%{transform:scale(1)}}
+  @keyframes down{0%{transform:translateY(0)}40%{transform:translateY(8px) scale(.94)}100%{transform:translateY(0)}}
+  .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted);font-weight:600;}
+  .pill{background:#fff5f8;border-radius:999px;padding:2px 12px;}
+  .pill b{color:var(--pink-d);}
+
+  /* ---------- step chips ---------- */
+  .steps-wrap{display:flex;flex-direction:column;gap:6px;}
+  .steps-title{font-size:13px;color:var(--muted);font-weight:700;padding-left:4px;}
+  .steps{display:flex;gap:8px;}
+  .chip{
+    flex:1;height:44px;border-radius:16px;border:0;cursor:pointer;
+    background:var(--card);color:var(--ink);font:inherit;font-weight:800;font-size:18px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    transition:transform .15s, background .2s, color .2s;
+  }
+  .chip:active{transform:scale(.92);}
+  .chip.on{background:var(--pink);color:#fff;box-shadow:0 6px 14px rgba(255,143,171,.45);}
+  .chip.custom.on{background:var(--lav);box-shadow:0 6px 14px rgba(200,182,255,.5);}
+
+  /* ---------- big clicker ---------- */
+  .stage{flex:1;display:grid;place-items:center;position:relative;min-height:0;}
+  .clicker{
+    --size:min(64vw, 40dvh, 270px);
+    width:var(--size);height:var(--size);border-radius:50%;border:0;cursor:pointer;
+    position:relative;
+    background:radial-gradient(circle at 28% 22%, #ffd1dc 0 8%, transparent 9%),
+               radial-gradient(circle at 50% 40%, #ffb3c6, var(--pink) 60%, var(--pink-d));
+    box-shadow:
+      0 14px 0 #e0577a,
+      0 22px 36px rgba(240,106,140,.45),
+      inset 0 -10px 20px rgba(0,0,0,.08);
+    transition:transform .08s, box-shadow .08s;
+    touch-action:manipulation;
+    outline:none;
+  }
+  .clicker.pressed{
+    transform:translateY(11px) scale(.97);
+    box-shadow:0 3px 0 #e0577a, 0 8px 16px rgba(240,106,140,.35), inset 0 -6px 14px rgba(0,0,0,.1);
+  }
+  .face{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:58%;pointer-events:none;}
+  .eyes{display:flex;justify-content:space-between;padding:0 16%;}
+  .eye{
+    width:calc(var(--size) * .075);height:calc(var(--size) * .095);background:#5a2d43;border-radius:50%;
+    position:relative;animation:blink 4s infinite;
+  }
+  .eye::after{content:"";position:absolute;width:35%;height:30%;background:#fff;border-radius:50%;top:18%;left:20%;}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  .clicker.pressed .eye{transform:scaleY(.15);animation:none;}
+  .cheeks{display:flex;justify-content:space-between;margin-top:2%;}
+  .cheek{width:calc(var(--size)*.11);height:calc(var(--size)*.055);background:#ff7096;opacity:.55;border-radius:50%;}
+  .mouth{
+    width:calc(var(--size)*.1);height:calc(var(--size)*.055);margin:-4% auto 0;
+    border:calc(var(--size)*.014) solid #5a2d43;border-top:0;border-radius:0 0 999px 999px;
+    transition:height .1s;
+  }
+  .clicker.pressed .mouth{height:calc(var(--size)*.08);width:calc(var(--size)*.08);border-radius:50%;border-top:calc(var(--size)*.014) solid #5a2d43;background:#7a3550;}
+  .plus{
+    position:absolute;left:50%;bottom:14%;transform:translateX(-50%);
+    color:#fff;font-weight:800;font-size:calc(var(--size)*.13);
+    text-shadow:0 2px 0 rgba(200,60,100,.35);pointer-events:none;white-space:nowrap;
+  }
+  .ring{
+    position:absolute;width:var(--size);height:var(--size);border-radius:50%;
+    border:4px solid var(--pink);pointer-events:none;opacity:0;
+  }
+  .ring.go{animation:ring .5s ease-out forwards;}
+  @keyframes ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.45);opacity:0}}
+
+  /* floating particles */
+  .fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5;}
+  .float{
+    position:absolute;font-weight:800;font-size:26px;color:var(--pink-d);
+    animation:floatUp .9s ease-out forwards;white-space:nowrap;
+  }
+  @keyframes floatUp{
+    0%{transform:translate(-50%,0) scale(.6);opacity:0}
+    15%{opacity:1;transform:translate(calc(-50% + var(--dx)*.2),-20px) scale(1.15)}
+    100%{transform:translate(calc(-50% + var(--dx)),-140px) scale(.9) rotate(var(--rot));opacity:0}
+  }
+  .confetti{position:absolute;top:-20px;width:10px;height:14px;border-radius:3px;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);}}
+  .toast{
+    position:fixed;left:50%;top:22%;transform:translate(-50%,0) scale(.6);
+    background:#fff;padding:10px 20px;border-radius:999px;font-weight:800;font-size:20px;
+    box-shadow:var(--shadow);opacity:0;z-index:6;pointer-events:none;white-space:nowrap;
+    transition:opacity .25s, transform .35s cubic-bezier(.3,1.6,.5,1);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0) scale(1);}
+
+  /* ---------- bottom actions ---------- */
+  .actions{display:flex;gap:10px;}
+  .act{
+    flex:1;height:54px;border-radius:20px;border:0;cursor:pointer;
+    font:inherit;font-weight:800;font-size:17px;color:var(--ink);
+    background:var(--card);box-shadow:0 4px 12px rgba(0,0,0,.06);
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:transform .12s, background .2s, color .2s;
+  }
+  .act:active{transform:scale(.94);}
+  .act.undo{background:#eafaf4;}
+  .act.reset{background:#fff3d6;}
+  .act.reset.confirm{background:#ff6b81;color:#fff;animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* ---------- custom step sheet ---------- */
+  .sheet-bg{position:fixed;inset:0;background:rgba(74,59,82,.35);display:none;align-items:flex-end;justify-content:center;z-index:10;}
+  .sheet-bg.open{display:flex;animation:fade .2s;}
+  @keyframes fade{from{opacity:0}}
+  .sheet{
+    width:100%;max-width:480px;background:#fff;border-radius:28px 28px 0 0;
+    padding:22px 20px calc(env(safe-area-inset-bottom) + 20px);
+    animation:up .3s cubic-bezier(.3,1.3,.5,1);
+  }
+  @keyframes up{from{transform:translateY(100%)}}
+  .sheet h3{margin:0 0 4px;font-size:22px;}
+  .sheet p{margin:0 0 14px;color:var(--muted);font-weight:600;}
+  .stepper{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .stepper button{width:56px;height:56px;border-radius:18px;border:0;background:#fff0f4;font:inherit;font-size:28px;font-weight:800;color:var(--pink-d);}
+  .stepper input{
+    flex:1;height:56px;border-radius:18px;border:2px solid #ffd6e0;text-align:center;
+    font:inherit;font-size:30px;font-weight:800;color:var(--ink);outline:none;
+  }
+  .stepper input:focus{border-color:var(--pink);}
+  .ok{width:100%;height:54px;border-radius:18px;border:0;background:var(--pink);color:#fff;font:inherit;font-size:19px;font-weight:800;box-shadow:0 6px 14px rgba(255,143,171,.45);}
+  .ok:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><span class="chick">🐣</span> Đếm Đếm</div>
+    <div class="icons">
+      <button class="icon-btn" id="vibBtn" aria-label="Rung">📳</button>
+      <button class="icon-btn" id="soundBtn" aria-label="Âm thanh">🔊</button>
+    </div>
+  </div>
+
+  <div class="display">
+    <div class="label">tổng cộng</div>
+    <div class="count" id="count">0</div>
+    <div class="meta">
+      <span class="pill">mỗi lần <b id="stepLbl">+1</b></span>
+      <span class="pill">đã bấm <b id="tapLbl">0</b> lần</span>
+    </div>
+  </div>
+
+  <div class="steps-wrap">
+    <div class="steps-title">Mỗi lần bấm cộng thêm</div>
+    <div class="steps" id="steps">
+      <button class="chip" data-step="1">1</button>
+      <button class="chip" data-step="2">2</button>
+      <button class="chip" data-step="5">5</button>
+      <button class="chip" data-step="10">10</button>
+      <button class="chip custom" id="customChip">✏️</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="ring" id="ring"></div>
+    <button class="clicker" id="clicker" aria-label="Bấm để đếm">
+      <div class="face">
+        <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+        <div class="cheeks"><div class="cheek"></div><div class="cheek"></div></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="plus" id="plusLbl">+1</div>
+    </button>
+  </div>
+
+  <div class="actions">
+    <button class="act undo" id="undoBtn">↶ <span>Bớt 1 lần</span></button>
+    <button class="act reset" id="resetBtn">⟲ <span id="resetTxt">Về 0</span></button>
+  </div>
+</div>
+
+<div class="fx" id="fx"></div>
+<div class="toast" id="toast"></div>
+
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet">
+    <h3>Bước nhảy tuỳ chỉnh ✨</h3>
+    <p>Mỗi lần bấm sẽ cộng thêm bao nhiêu?</p>
+    <div class="stepper">
+      <button id="minus">−</button>
+      <input id="stepInput" type="number" inputmode="numeric" min="1" max="9999" value="3">
+      <button id="plus">+</button>
+    </div>
+    <button class="ok" id="okBtn">Xong!</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- state ----------
+  const KEY = 'demdem-v1';
+  const state = { count: 0, taps: 0, step: 1, sound: true, vib: true, history: [] };
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) Object.assign(state, saved);
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const countEl = $('count'), stepLbl = $('stepLbl'), tapLbl = $('tapLbl'), plusLbl = $('plusLbl');
+  const clicker = $('clicker'), ring = $('ring'), fx = $('fx'), toast = $('toast');
+
+  // ---------- audio (synthesized, no files needed) ----------
+  let ctx = null;
+  const ac = () => {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  function tone({ type = 'sine', f0, f1 = f0, dur = .12, vol = .25, delay = 0, vib = 0 }) {
+    const c = ac(), t = c.currentTime + delay;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(f1, 20), t + dur);
+    if (vib) {
+      const l = c.createOscillator(), lg = c.createGain();
+      l.frequency.value = vib; lg.gain.value = f0 * .08;
+      l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dur);
+    }
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + .008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + .02);
+  }
+  const r = (a, b) => a + Math.random() * (b - a);
+  const sounds = [
+    // pop
+    p => tone({ f0: 700 * p, f1: 250 * p, dur: .09, vol: .35 }),
+    // bubble
+    p => tone({ f0: 280 * p, f1: 950 * p, dur: .11, vol: .3 }),
+    // chirp chirp
+    p => { tone({ type: 'triangle', f0: 1800 * p, f1: 2400 * p, dur: .05, vol: .2 });
+           tone({ type: 'triangle', f0: 2000 * p, f1: 2700 * p, dur: .05, vol: .2, delay: .07 }); },
+    // boing
+    p => tone({ f0: 420 * p, f1: 160 * p, dur: .25, vol: .3, vib: 28 }),
+    // ding
+    p => { tone({ f0: 1320 * p, dur: .35, vol: .18 }); tone({ f0: 2640 * p, dur: .2, vol: .06 }); },
+    // coin
+    p => { tone({ type: 'square', f0: 988 * p, dur: .06, vol: .08 });
+           tone({ type: 'square', f0: 1319 * p, dur: .18, vol: .08, delay: .06 }); },
+    // squeak
+    p => tone({ type: 'triangle', f0: 1400 * p, f1: 2300 * p, dur: .08, vol: .22 }),
+    // blip
+    p => tone({ type: 'sine', f0: 880 * p, f1: 660 * p, dur: .07, vol: .3 }),
+    // kitty mew
+    p => tone({ type: 'triangle', f0: 900 * p, f1: 600 * p, dur: .2, vol: .2, vib: 9 }),
+  ];
+  let lastSound = -1;
+  function playTap() {
+    if (!state.sound) return;
+    let i; do { i = Math.floor(Math.random() * sounds.length); } while (i === lastSound);
+    lastSound = i;
+    sounds[i](r(.92, 1.1));
+  }
+  function playMilestone(big) {
+    if (!state.sound) return;
+    const notes = big ? [523, 659, 784, 1047, 1319] : [784, 988, 1175];
+    notes.forEach((f, k) => tone({ type: 'triangle', f0: f, dur: .18, vol: .2, delay: k * .08 }));
+  }
+  const playUndo = () => state.sound && tone({ type: 'triangle', f0: 500, f1: 220, dur: .16, vol: .22 });
+  const playReset = () => state.sound && tone({ f0: 900, f1: 120, dur: .4, vol: .25 });
+
+  const buzz = ms => { if (state.vib && navigator.vibrate) navigator.vibrate(ms); };
+
+  // keep screen on while counting
+  let wakeLock = null;
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => wakeLock = null);
+    } } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.taps) keepAwake(); });
+
+  // ---------- render ----------
+  const fmt = n => n.toLocaleString('vi-VN');
+  function render(anim) {
+    countEl.textContent = fmt(state.count);
+    stepLbl.textContent = '+' + state.step;
+    plusLbl.textContent = '+' + state.step;
+    tapLbl.textContent = fmt(state.taps);
+    $('undoBtn').querySelector('span').textContent = 'Bớt ' + state.step;
+    $('soundBtn').textContent = state.sound ? '🔊' : '🔇';
+    $('soundBtn').classList.toggle('off', !state.sound);
+    $('vibBtn').classList.toggle('off', !state.vib);
+    const presets = [1, 2, 5, 10];
+    document.querySelectorAll('.chip[data-step]').forEach(c => c.classList.toggle('on', +c.dataset.step === state.step));
+    const custom = $('customChip');
+    const isCustom = !presets.includes(state.step);
+    custom.classList.toggle('on', isCustom);
+    custom.textContent = isCustom ? state.step : '✏️';
+    if (anim) {
+      countEl.classList.remove('bump', 'down'); void countEl.offsetWidth;
+      countEl.classList.add(anim);
+    }
+  }
+
+  // ---------- effects ----------
+  const emojis = ['✨', '⭐', '💖', '🌸', '🍬', '💫', '🫧', '🐥'];
+  function floatText(x, y) {
+    const el = document.createElement('div');
+    el.className = 'float';
+    const withEmoji = Math.random() < .5;
+    el.textContent = '+' + state.step + (withEmoji ? ' ' + emojis[Math.floor(Math.random() * emojis.length)] : '');
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    el.style.setProperty('--dx', r(-70, 70) + 'px');
+    el.style.setProperty('--rot', r(-25, 25) + 'deg');
+    el.style.color = ['#f06a8c', '#a77bff', '#2fbf98', '#ff9a5a'][Math.floor(Math.random() * 4)];
+    fx.appendChild(el);
+    setTimeout(() => el.remove(), 950);
+  }
+  function confetti(n = 40) {
+    const colors = ['#ff8fab', '#ffc09f', '#9ee6cf', '#c8b6ff', '#ffe27a'];
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = r(0, 100) + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = r(1.4, 2.6) + 's';
+      c.style.animationDelay = r(0, .3) + 's';
+      if (Math.random() < .4) c.style.borderRadius = '50%';
+      fx.appendChild(c);
+      setTimeout(() => c.remove(), 3000);
+    }
+  }
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1300);
+  }
+  const cheers = ['Giỏi quá! 🎉', 'Tuyệt vời! 🌟', 'Cố lên nè! 💪', 'Xịn xò! ✨', 'Đỉnh ghê! 🐥', 'Yay! 🍭'];
+
+  // ---------- actions ----------
+  function tap(e) {
+    state.count += state.step;
+    state.taps += 1;
+    state.history.push(state.step);
+    if (state.history.length > 500) state.history.shift();
+    save();
+    render('bump');
+    playTap();
+    buzz(12);
+    keepAwake();
+
+    ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
+    const rect = clicker.getBoundingClientRect();
+    const x = e && e.clientX ? e.clientX : rect.left + rect.width / 2;
+    const y = e && e.clientY ? e.clientY : rect.top + rect.height * .3;
+    floatText(x, y - 20);
+
+    if (state.taps % 100 === 0) { playMilestone(true); confetti(80); showToast(fmt(state.taps) + ' lần bấm! 🏆'); buzz([30, 40, 30]); }
+    else if (state.taps % 10 === 0) { setTimeout(() => playMilestone(false), 60); confetti(26); showToast(cheers[Math.floor(Math.random() * cheers.length)]); }
+  }
+
+  // press feel: react on pointerdown for speed
+  clicker.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    clicker.classList.add('pressed');
+    tap(e);
+  });
+  const release = () => clicker.classList.remove('pressed');
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => clicker.addEventListener(ev, release));
+  clicker.addEventListener('contextmenu', e => e.preventDefault());
+
+  // keyboard / bluetooth clicker support
+  document.addEventListener('keydown', e => {
+    if ($('sheetBg').classList.contains('open')) return;
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'AudioVolumeUp') {
+      e.preventDefault(); if (e.repeat) return;
+      clicker.classList.add('pressed'); tap(); setTimeout(release, 90);
+    } else if (e.code === 'Backspace' || e.code === 'ArrowDown') {
+      e.preventDefault(); undo();
+    }
+  });
+
+  function undo() {
+    if (state.taps === 0) { buzz(30); return; }
+    const s = state.history.length ? state.history.pop() : state.step;
+    state.count = Math.max(0, state.count - s);
+    state.taps -= 1;
+    save(); render('down'); playUndo(); buzz(20);
+  }
+  $('undoBtn').addEventListener('click', undo);
+
+  let resetArmed = false, resetTimer;
+  $('resetBtn').addEventListener('click', () => {
+    const btn = $('resetBtn');
+    if (!resetArmed) {
+      if (state.count === 0 && state.taps === 0) return;
+      resetArmed = true; btn.classList.add('confirm'); $('resetTxt').textContent = 'Chắc chưa?';
+      buzz(25);
+      resetTimer = setTimeout(() => { resetArmed = false; btn.classList.remove('confirm'); $('resetTxt').textContent = 'Về 0'; }, 2500);
+      return;
+    }
+    clearTimeout(resetTimer);
+    resetArmed = false; btn.classList.remove('confirm'); $('resetTxt').textContent = 'Về 0';
+    state.count = 0; state.taps = 0; state.history = [];
+    save(); render('down'); playReset(); buzz([20, 30, 20]);
+    showToast('Bắt đầu lại nè 🌱');
+  });
+
+  // step chips
+  document.querySelectorAll('.chip[data-step]').forEach(c =>
+    c.addEventListener('click', () => {
+      state.step = +c.dataset.step; save(); render();
+      state.sound && tone({ type: 'triangle', f0: 1200, dur: .06, vol: .15 });
+      buzz(8);
+    }));
+
+  // custom step sheet
+  const sheetBg = $('sheetBg'), input = $('stepInput');
+  $('customChip').addEventListener('click', () => {
+    input.value = [1, 2, 5, 10].includes(state.step) ? 3 : state.step;
+    sheetBg.classList.add('open');
+  });
+  const clamp = v => Math.min(9999, Math.max(1, Math.round(+v || 1)));
+  $('minus').addEventListener('click', () => { input.value = clamp(+input.value - 1); });
+  $('plus').addEventListener('click', () => { input.value = clamp(+input.value + 1); });
+  function closeSheet(apply) {
+    if (apply) { state.step = clamp(input.value); save(); render(); showToast('Mỗi lần +' + state.step + ' 👍'); }
+    input.blur(); sheetBg.classList.remove('open');
+  }
+  $('okBtn').addEventListener('click', () => closeSheet(true));
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') closeSheet(true); });
+  sheetBg.addEventListener('click', e => { if (e.target === sheetBg) closeSheet(false); });
+
+  // toggles
+  $('soundBtn').addEventListener('click', () => { state.sound = !state.sound; save(); render(); if (state.sound) sounds[0](1); });
+  $('vibBtn').addEventListener('click', () => { state.vib = !state.vib; save(); render(); buzz(40); showToast(state.vib ? 'Bật rung 📳' : 'Tắt rung'); });
+
+  // prevent pinch / double-tap zoom on iOS
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  let lastTouch = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouch < 300 && !e.target.closest('input')) e.preventDefault();
+    lastTouch = now;
+  }, { passive: false });
+
+  render();
+})();
+</script>
+</body>
+</html>
